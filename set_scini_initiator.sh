@@ -4,8 +4,8 @@ systemctl restart scini
 exit
 else
 echo -e "test" > /etc/emc/scaleio/scini_test.txt
-export uuid=\$(uuidgen)
-echo -e "ini_guid \$uuid\nmdm ${MDM_IP}" > /etc/emc/scaleio/drv_cfg.txt
+export uuid=$(uuidgen)
+echo -e "ini_guid $uuid\nmdm ${MDM_IP}" > /etc/emc/scaleio/drv_cfg.txt
 sleep 10
 systemctl restart scini
 fi
