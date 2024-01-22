@@ -7,6 +7,10 @@ variable "prefix" {
   default = "ubuntu-2204-apex-block-sdc-ami"
 }
 
+locals {
+  mdmIpAddresses = "10.204.111.85,10.204.111.86,10.204.111.87"
+  }
+
 #PLEASE CHANGE UBUNTU 22.04 AMI AS PER REGION. THIS IS FOR EU IRELAND
 resource "aws_instance" "sdc" {
   ami           = "ami-08031206a0ff5a6ac"
@@ -38,10 +42,12 @@ unzip PowerFlex_4.5.0.287_Ubuntu20.04_SDC.zip
 cd PowerFlex_4.5.0.287_Ubuntu20.04_SDC/
 tar -xvf EMC-ScaleIO-sdc-4.5-0.287.Ubuntu.20.04.4.x86_64.tar
 ./siob_extract EMC-ScaleIO-sdc-4.5-0.287.Ubuntu.20.04.4.x86_64.siob
-MDM_IP=10.204.111.85,10.204.111.86,10.204.111.87 dpkg -i EMC-ScaleIO-sdc-4.5-0.287.Ubuntu.20.04.4.x86_64.deb
+MDM_IP=${local.mdmIpAddresses} dpkg -i EMC-ScaleIO-sdc-4.5-0.287.Ubuntu.20.04.4.x86_64.deb
 export REPO_USER=QNzgdxXix
 export REPO_PASSWORD=Aw3wFAwAq3
-export MDM_IP=10.204.111.85,10.204.111.86,10.204.111.87
+export MDM_IP=${local.mdmIpAddresses}
+sudo echo "MDM_IP=$MDM_IP; export MDM_IP" >> ~/.profile
+sudo source ~/.profile
 cd /bin/emc/scaleio/scini_sync/
 wget https://raw.githubusercontent.com/thecloudgarage/powerflex/main/driver_sync.conf
 touch /etc/emc/scaleio/scini_test.txt
@@ -50,6 +56,7 @@ systemctl restart scini
 sleep 20
 cd /etc/emc/scaleio/
 wget https://raw.githubusercontent.com/thecloudgarage/powerflex/main/set_scini_initiator.sh
+#sudo sed -i "s/mdmIpAddress/\$MDM_IP/g" set_scini_initiator.sh
 chmod +x /etc/emc/scaleio/set_scini_initiator.sh
 cd /etc/systemd/system/
 wget https://raw.githubusercontent.com/thecloudgarage/powerflex/main/set_scini_initiator.service
@@ -69,6 +76,43 @@ EOF
   }
 }
 
+resource "time_sleep" "wait_for_ec2_creation" {
+  create_duration = "600s"
+  depends_on = [ aws_instance.sdc ]
+}
+
+resource "null_resource" "checkconnection" {
+  depends_on = [time_sleep.wait_for_ec2_creation]
+  connection {
+      type     = "ssh"
+      user     = "root"
+      password = "ubuntu"
+      host     = "${aws_instance.sdc[0].private_ip}"
+  }
+  // change permissions to executable and pipe its output into a new file
+  provisioner "remote-exec" {
+    inline = [
+      "rm -rf /etc/emc/scaleio/scini_test.txt"
+    ]
+  }
+}
+
+resource "time_sleep" "wait_for_ec2_root_connection" {
+  create_duration = "20s"
+  depends_on = [ null_resource.checkconnection ]
+}
+
+resource "aws_ami_from_instance" "create_sdc_ami" {
+  depends_on = [time_sleep.wait_for_ec2_root_connection]
+  name               = "test-ubuntu-20-04-sdc-ami"
+  source_instance_id = "${aws_instance.sdc[0].id}"
+  snapshot_without_reboot = true
+}
+
+output "ami-id" {
+  value       = "${aws_ami_from_instance.create_sdc_ami.id}"
+  description = "AMI ID created for the ubuntu 20.04 SDC"
+}
 output "instances" {
   value       = "${aws_instance.sdc.*.private_ip}"
   description = "PrivateIP address details"
