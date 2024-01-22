@@ -1,3 +1,5 @@
+#PLEASE CHANGE THE SITE URL TO SELF HOSTED WEB SERVICE WHERE YOU HAVE STORED THE POWERFLEX PACKAGE ZIP FILE.
+
 provider "aws" {
   region = "eu-west-1"
 }
@@ -37,7 +39,7 @@ s/GRUB_DEFAULT=0/GRUB_DEFAULT='"Advanced options for Ubuntu>Ubuntu, with Linux 5
 sudo update-grub
 #DOWNLOAD AND INSTALL POWERFLEX SDC PACKAGES
 cd /home/ubuntu
-wget https://pflex-packages.s3.eu-west-1.amazonaws.com/pflex-45/Software_Only_Complete_4.5.0_287/PowerFlex_4.5.0.287_SDCs_for_manual_install.zip
+wget https://<SITE_URL>/Software_Only_Complete_4.5.0_287/PowerFlex_4.5.0.287_SDCs_for_manual_install.zip
 unzip PowerFlex_4.5.0.287_SDCs_for_manual_install.zip
 cd PowerFlex_4.5.0.287_SDCs_for_manual_install/
 unzip PowerFlex_4.5.0.287_Ubuntu20.04_SDC.zip
