@@ -2,7 +2,7 @@
 # Copy the below contents in the service file
 [Unit]
 Description=Set unique uuid for powerflex sdc
-After=network.target
+After=network-online.target
 [Service]
 ExecStart=/etc/emc/scaleio/set_scini_initiator.sh
 Restart=on-failure
