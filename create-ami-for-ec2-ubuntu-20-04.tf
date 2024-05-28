@@ -6,14 +6,14 @@ provider "aws" {
 
 variable "prefix" {
   description = "servername prefix"
-  default = "ubuntu-2204-apex-block-sdc-ami"
+  default = "ubuntu-2004-apex-block-sdc-ami"
 }
 
 locals {
   mdmIpAddresses = "10.204.111.85,10.204.111.86,10.204.111.87"
   }
 
-#PLEASE CHANGE UBUNTU 22.04 AMI AS PER REGION. THIS IS FOR EU IRELAND
+#PLEASE CHANGE UBUNTU 20.04 AMI AS PER REGION. THIS IS FOR EU IRELAND
 resource "aws_instance" "sdc" {
   ami           = "ami-08031206a0ff5a6ac"
   instance_type = "t2.micro"
